@@ -1,3 +1,5 @@
+#!/usr/bin/python3.6
+
 import json
 import tweepy
 import requests
@@ -6,6 +8,8 @@ from tweepy import Stream
 from bs4 import BeautifulSoup
 from tweepy import OAuthHandler
 from tweepy.streaming import StreamListener
+import signal
+import sys
 
 
 class StdOutListener(StreamListener):
@@ -84,12 +88,22 @@ class StdOutListener(StreamListener):
 		else:
 			print(str(status)+' :: Unknown')
 
+def signal_handler(signal, frame):
+	print('Tweeting [DEACTIVATED] status and terminating program...')
+	api.update_status(status=f'{datetime.datetime.now()} :: [DEACTIVATED]')
+	sys.exit(0)
+
+# Handle ctl-c and ctrl-z signals
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTSTP, signal_handler)
 
 global api
 auth = tweepy.OAuthHandler('', '')
 auth.secure = True
 auth.set_access_token('', '')
 api = tweepy.API(auth)
-print(api.me().name)
+print(f'Logged in as {api.me().name}\n=========================')
+print('Tweeting [ACTIVATED] status...')
+api.update_status(status=f'{datetime.datetime.now()} :: [ACTIVATED]')
 stream = Stream(auth, StdOutListener())
 stream.userstream()
